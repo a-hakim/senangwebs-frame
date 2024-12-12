@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SenangWebs Frame Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="../dist/swf.css">
+</head>
+
+<body class="min-h-screen bg-gray-100">
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h4 class="text-xl lg:text-2xl capitalize font-bold mb-4">SenangWebs Gallery</h4>
+        <div data-swf-items class="aspect-video border">
+            <div data-swf-item class="flex items-center justify-center bg-blue-500">Slide 1</div>
+            <div data-swf-item class="flex items-center justify-center bg-red-500">Slide 2</div>
+            <div data-swf-item class="flex items-center justify-center bg-green-500">Slide 3</div>
+            <div data-swf-item class="flex items-center justify-center bg-yellow-500">Slide 4</div>
+            <div data-swf-item class="flex items-center justify-center bg-pink-500">Slide 5</div>
+        </div>
+        <div data-swf-controls>
+            <button data-swf-prev>Previous</button>
+            <button data-swf-next>Next</button>
+        </div>
+    </main>
+
+    <script src="../dist/swf.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slider = new SWF({
+                autoplay: false,
+                autoplayDelay: 5000,
+                animationSpeed: 500,
+                infinite: true,
+                responsive: [{
+                        breakpoint: 1024, // Large screens
+                        slidesPerView: 3, // Show 3 slides
+                        spacing: 20 // 20px gap between slides
+                    },
+                    {
+                        breakpoint: 768, // Tablet
+                        slidesPerView: 2,
+                        spacing: 15
+                    },
+                    {
+                        breakpoint: 480, // Mobile
+                        slidesPerView: 1,
+                        spacing: 10
+                    }
+                ]
+            });
+        });
+    </script>
+
+</body>
+
+</html>
