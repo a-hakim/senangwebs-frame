@@ -4,25 +4,38 @@
  */
 
 class SWF {
-    constructor(config = {}) {
+    constructor(element, userConfig = {}) {
+        // Allow passing either element or config
+        if (!(element instanceof HTMLElement)) {
+            userConfig = element;
+            element = null;
+        }
+
+        this.container = element || document.querySelector('[data-swf-items]');
+        if (!this.container) return;
+
+        // Parse data attributes
+        const dataConfig = this.parseDataAttributes(this.container);
+        
         this.config = {
-            autoplay: config.autoplay ?? false,
-            autoplayDelay: config.autoplayDelay ?? 3000,
-            animationSpeed: config.animationSpeed ?? 300,
-            infinite: config.infinite ?? true,
-            startIndex: config.startIndex ?? 0,
-            responsive: config.responsive ?? [
+            autoplay: false,
+            autoplayDelay: 3000,
+            animationSpeed: 300,
+            infinite: true,
+            startIndex: 0,
+            responsive: [
                 {
                     breakpoint: 4000,
                     slidesPerView: 1,
                     spacing: 0
                 }
             ],
-            ...config
+            ...dataConfig,  // Data attributes override defaults
+            ...userConfig   // User config overrides data attributes
         };
 
-        // Sort breakpoints in ascending order initially
-        this.config.responsive.sort((a, b) => a.breakpoint - b.breakpoint);
+        // Ensure responsive config is properly formatted
+        this.normalizeResponsiveConfig();
 
         this.state = {
             currentIndex: this.config.startIndex,
@@ -39,10 +52,105 @@ class SWF {
         this.init();
     }
 
-    init() {
-        this.container = document.querySelector('[data-swf-items]');
-        if (!this.container) return;
+    parseDataAttributes(element) {
+        const config = {};
+        const booleanAttrs = ['autoplay', 'infinite'];
+        const numberAttrs = ['autoplayDelay', 'animationSpeed', 'startIndex'];
 
+        // Parse boolean attributes
+        booleanAttrs.forEach(attr => {
+            const value = element.dataset[`swf${attr.charAt(0).toUpperCase()}${attr.slice(1)}`];
+            if (value !== undefined) {
+                config[attr] = value === 'true';
+            }
+        });
+
+        // Parse number attributes
+        numberAttrs.forEach(attr => {
+            const value = element.dataset[`swf${attr.charAt(0).toUpperCase()}${attr.slice(1)}`];
+            if (value !== undefined) {
+                config[attr] = Number(value);
+            }
+        });
+
+        // Parse responsive settings
+        this.parseResponsiveAttributes(element, config);
+
+        return config;
+    }
+
+    parseResponsiveAttributes(element, config) {
+        // Try to parse the responsive JSON data attribute
+        const responsiveJson = element.dataset.swfResponsive;
+        if (responsiveJson) {
+            try {
+                const parsed = JSON.parse(responsiveJson);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    config.responsive = parsed;
+                    console.log('Parsed responsive config:', config.responsive);
+                }
+            } catch (e) {
+                console.warn('Invalid JSON in data-swf-responsive:', e);
+            }
+        }
+
+        // Fallback to individual attributes if JSON parsing failed or was empty
+        if (!config.responsive || !config.responsive.length) {
+            const responsive = [];
+            let breakpoint = 0;
+            
+            while (true) {
+                const breakpointAttr = element.dataset[`swfBreakpoint${breakpoint}`];
+                const slidesAttr = element.dataset[`swfSlides${breakpoint}`];
+                const spacingAttr = element.dataset[`swfSpacing${breakpoint}`];
+
+                if (!breakpointAttr && !slidesAttr && !spacingAttr) {
+                    break;
+                }
+
+                if (breakpointAttr) {
+                    responsive.push({
+                        breakpoint: parseInt(breakpointAttr, 10) || 4000,
+                        slidesPerView: parseInt(slidesAttr, 10) || 1,
+                        spacing: parseInt(spacingAttr, 10) || 0
+                    });
+                }
+
+                breakpoint++;
+            }
+
+            if (responsive.length > 0) {
+                config.responsive = responsive;
+            }
+        }
+    }
+
+    normalizeResponsiveConfig() {
+        if (!Array.isArray(this.config.responsive)) {
+            this.config.responsive = [
+                {
+                    breakpoint: 4000,
+                    slidesPerView: 1,
+                    spacing: 0
+                }
+            ];
+            return;
+        }
+
+        // Validate and fix each breakpoint configuration
+        this.config.responsive = this.config.responsive.map(bp => ({
+            breakpoint: parseInt(bp.breakpoint) || 4000,
+            slidesPerView: Math.max(1, parseInt(bp.slidesPerView) || 1),
+            spacing: Math.max(0, parseInt(bp.spacing) || 0)
+        }));
+
+        // Sort breakpoints in ascending order
+        this.config.responsive.sort((a, b) => a.breakpoint - b.breakpoint);
+
+        console.log('Normalized responsive config:', this.config.responsive);
+    }
+
+    init() {
         // Create track element if it doesn't exist
         this.track = this.container.querySelector('[data-swf-track]');
         if (!this.track) {
@@ -60,8 +168,15 @@ class SWF {
         }
 
         this.slides = Array.from(this.container.querySelectorAll('[data-swf-item]'));
-        this.prevButton = document.querySelector('[data-swf-prev]');
-        this.nextButton = document.querySelector('[data-swf-next]');
+        
+        // Find controls within the same container scope
+        const controls = this.container.closest('[data-swf-controls]') || 
+                        this.container.nextElementSibling;
+        
+        if (controls && controls.matches('[data-swf-controls]')) {
+            this.prevButton = controls.querySelector('[data-swf-prev]');
+            this.nextButton = controls.querySelector('[data-swf-next]');
+        }
 
         if (!this.slides.length) return;
 
@@ -89,83 +204,89 @@ class SWF {
 
     setupResponsive() {
         const width = window.innerWidth;
+        console.log('Current window width:', width);
         
         // Find the appropriate breakpoint
-        // Start from smallest breakpoint and work up
-        let currentBreakpoint = this.config.responsive[0]; // Default to smallest
+        let currentBreakpoint = this.config.responsive[0];
 
-        for (let bp of this.config.responsive) {
-            if (width > bp.breakpoint) {
-                continue;
-            } else {
+        for (const bp of this.config.responsive) {
+            if (width <= bp.breakpoint) {
                 currentBreakpoint = bp;
                 break;
             }
         }
 
-        // If we're larger than all breakpoints, use the largest one
-        if (width > currentBreakpoint.breakpoint) {
+        // If no matching breakpoint found, use the largest one
+        if (!currentBreakpoint) {
             currentBreakpoint = this.config.responsive[this.config.responsive.length - 1];
         }
 
+        const previousBreakpoint = this.state.currentBreakpoint;
         this.state.currentBreakpoint = currentBreakpoint;
         this.state.slidesPerView = currentBreakpoint.slidesPerView;
         this.state.spacing = currentBreakpoint.spacing;
 
-        // Debug output
-        console.log('Current width:', width);
         console.log('Selected breakpoint:', currentBreakpoint);
         console.log('Slides per view:', this.state.slidesPerView);
+        console.log('Spacing:', this.state.spacing);
+
+        return previousBreakpoint !== currentBreakpoint;
     }
 
     setupStyles() {
+        if (!this.container || !this.track || !this.slides.length) return;
+
         const containerWidth = this.container.offsetWidth;
         const totalSlides = this.slides.length;
         const slidesPerView = this.state.slidesPerView;
         const spacing = this.state.spacing;
 
-        // Calculate exact slide width based on container width and spacing
-        const slideWidth = (containerWidth - (spacing * (slidesPerView - 1))) / slidesPerView;
-        
-        // Set absolute widths and margins in pixels for precise control
-        this.slides.forEach(slide => {
-            slide.style.width = `${slideWidth}px`;
-            slide.style.marginRight = `${spacing}px`;
-        });
-        
-        // Remove margin from last slide if not infinite
-        if (!this.config.infinite) {
-            this.slides[this.slides.length - 1].style.marginRight = '0px';
-        }
+        console.log('Container width:', containerWidth);
+        console.log('Setting up styles with:', { slidesPerView, spacing, totalSlides });
 
-        // Calculate and set track width in pixels
-        const trackWidth = (slideWidth * totalSlides) + (spacing * (totalSlides - 1));
-        this.track.style.width = `${trackWidth}px`;
-        
+        // Calculate slide width accounting for spacing between slides
+        const totalSpacingWidth = spacing * (slidesPerView - 1);
+        const slideWidth = (containerWidth - totalSpacingWidth) / slidesPerView;
+
+        console.log('Calculated slide width:', slideWidth);
+
+        // Reset track styles
+        this.track.style.display = 'flex';
+        this.track.style.flexWrap = 'nowrap';
+        this.track.style.width = '100%';
+        this.track.style.gap = `${spacing}px`;
+
+        // Set styles for slides
+        this.slides.forEach(slide => {
+            slide.style.flex = `0 0 ${(100 / slidesPerView)}%`;
+            slide.style.maxWidth = `${(100 / slidesPerView)}%`;
+            slide.style.boxSizing = 'border-box';
+        });
+
         // Store calculated dimensions for position updates
         this.state.dimensions = {
             slideWidth,
             spacing,
-            trackWidth
+            containerWidth,
+            slidesPerView
         };
     }
 
     getMaxIndex() {
+        if (!this.slides.length || !this.state.slidesPerView) return 0;
+        
         const totalSlides = this.slides.length;
         const slidesPerView = this.state.slidesPerView;
-        // Subtract slidesPerView from total and add 1 to get correct max index
-        return Math.max(0, totalSlides - slidesPerView);
+        return Math.max(0, Math.ceil(totalSlides / slidesPerView) - 1);
     }
 
     updateSlidePositions() {
         if (!this.state.dimensions) return;
+
+        const { containerWidth } = this.state.dimensions;
+        const targetPosition = -this.state.currentIndex * containerWidth;
         
-        const { slideWidth, spacing } = this.state.dimensions;
-        // Calculate movement based on slide width plus spacing
-        const moveDistance = slideWidth + spacing;
-        const translateX = -(this.state.currentIndex * moveDistance);
-        
-        this.track.style.transform = `translateX(${translateX}px)`;
+        this.track.style.transform = `translateX(${targetPosition}px)`;
 
         // Update button states if not infinite
         if (!this.config.infinite) {
@@ -211,9 +332,8 @@ class SWF {
 
         const currentX = e.touches[0].clientX;
         const diff = this.state.touchStartX - currentX;
-        const { slideWidth, spacing } = this.state.dimensions;
-        const moveDistance = slideWidth + spacing;
-        const baseTranslate = -(this.state.currentIndex * moveDistance);
+        const { containerWidth } = this.state.dimensions;
+        const baseTranslate = -(this.state.currentIndex * containerWidth);
         
         this.track.style.transform = `translateX(${baseTranslate - diff}px)`;
     }
@@ -242,10 +362,11 @@ class SWF {
     }
 
     handleResize() {
-        const previousSlidesPerView = this.state.slidesPerView;
-        this.setupResponsive();
-        
-        if (previousSlidesPerView !== this.state.slidesPerView) {
+        const width = window.innerWidth;
+        console.log('Window resized to:', width);
+
+        if (this.setupResponsive()) {
+            console.log('Breakpoint changed, updating styles');
             this.setupStyles();
             
             const maxIndex = this.getMaxIndex();
@@ -292,7 +413,7 @@ class SWF {
             this.container.dispatchEvent(new CustomEvent('swf:change', {
                 detail: {
                     index: targetIndex,
-                    slide: this.slides[targetIndex]
+                    slide: this.slides[targetIndex * this.state.slidesPerView]
                 }
             }));
         }, this.config.animationSpeed);
@@ -346,10 +467,22 @@ class SWF {
             slide.style = '';
         });
     }
+
+    static initializeAll() {
+        document.querySelectorAll('[data-swf-items]').forEach(container => {
+            new SWF(container);
+        });
+    }
 }
 
 export default SWF;
 
 if (typeof window !== 'undefined') {
     window.SWF = SWF;
+    // Auto-initialize all carousels when the DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => SWF.initializeAll());
+    } else {
+        SWF.initializeAll();
+    }
 }

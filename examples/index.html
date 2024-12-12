@@ -14,8 +14,8 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h4 class="text-xl lg:text-2xl capitalize font-bold mb-4">SenangWebs Gallery</h4>
-        <div data-swf-items class="aspect-video border">
+        <h4 class="text-xl lg:text-2xl capitalize font-bold mb-4">SenangWebs Frame</h4>
+        <div data-swf-items id="my-carousel" class="aspect-video border">
             <div data-swf-item class="flex items-center justify-center bg-blue-500">Slide 1</div>
             <div data-swf-item class="flex items-center justify-center bg-red-500">Slide 2</div>
             <div data-swf-item class="flex items-center justify-center bg-green-500">Slide 3</div>
@@ -26,17 +26,31 @@
             <button data-swf-prev>Previous</button>
             <button data-swf-next>Next</button>
         </div>
+
+
+        <div data-swf-items data-swf-autoplay="true" data-swf-infinite="true" data-swf-autoplay-delay="5000"
+            data-swf-animation-speed="500" data-swf-start-index="0"
+            data-swf-responsive='[
+            {"breakpoint": 1024, "slidesPerView": 3, "spacing": 20},
+            {"breakpoint": 768, "slidesPerView": 2, "spacing": 15},
+            {"breakpoint": 480, "slidesPerView": 1, "spacing": 10}
+         ]'>
+            <div data-swf-item class="bg-gray-500 aspect-square">Slide 1</div>
+            <div data-swf-item class="bg-gray-500 aspect-square">Slide 2</div>
+            <div data-swf-item class="bg-gray-500 aspect-square">Slide 3</div>
+            <div data-swf-item class="bg-gray-500 aspect-square">Slide 4</div>
+            <div data-swf-item class="bg-gray-500 aspect-square">Slide 5</div>
+        </div>
     </main>
 
     <script src="../dist/swf.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const slider = new SWF({
+            const element = document.querySelector('#my-carousel');
+            const slider = new SWF(element, {
                 autoplay: false,
-                autoplayDelay: 5000,
-                animationSpeed: 500,
-                infinite: true,
+                infinite: false,
                 responsive: [{
                         breakpoint: 1024, // Large screens
                         slidesPerView: 3, // Show 3 slides
@@ -54,6 +68,7 @@
                     }
                 ]
             });
+            SWF.initializeAll();
         });
     </script>
 
