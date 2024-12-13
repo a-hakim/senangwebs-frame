@@ -1,6 +1,6 @@
 /**
  * SenangWebs Frame - A lightweight, touch-friendly slider library
- * Version 1.2.1
+ * Version 1.2.2
  */
 
 class SWF {
@@ -12,6 +12,12 @@ class SWF {
 
         this.wrapper = element || document.querySelector('[data-swf]');
         if (!this.wrapper) return;
+
+        // Check if instance already exists
+        if (this.wrapper._swf) {
+            this.wrapper._swf.destroy();
+        }
+        this.wrapper._swf = this;
 
         this.container = this.wrapper.querySelector('[data-swf-items]');
         if (!this.container) return;
@@ -93,6 +99,7 @@ class SWF {
             return;
         }
 
+        // Sort breakpoints in descending order
         this.config.responsive.sort((a, b) => b.breakpoint - a.breakpoint);
     }
 
@@ -419,7 +426,10 @@ class SWF {
 
     static initializeAll() {
         document.querySelectorAll('[data-swf]').forEach(wrapper => {
-            new SWF(wrapper);
+            // Only initialize if no instance exists
+            if (!wrapper._swf) {
+                new SWF(wrapper);
+            }
         });
     }
 }

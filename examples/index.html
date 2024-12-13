@@ -15,8 +15,25 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h4 class="text-xl lg:text-2xl capitalize font-bold mb-4">SenangWebs Frame</h4>
-        <div data-swf id="my-carousel">
-            <div data-swf-items class="aspect-video border">
+
+        <div data-swf class="mb-8">
+            <div data-swf-items data-swf-autoplay="true" data-swf-infinite="true" data-swf-autoplay-delay="5000"
+                data-swf-animation-speed="500" data-swf-start-index="0"
+                data-swf-responsive='[
+            {"breakpoint": 1024, "slidesPerView": 3, "spacing": 16},
+            {"breakpoint": 768, "slidesPerView": 2, "spacing": 12},
+            {"breakpoint": 480, "slidesPerView": 1, "spacing": 8}
+         ]'>
+                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-20">Slide 1</div>
+                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-40">Slide 2</div>
+                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-60">Slide 3</div>
+                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-80">Slide 4</div>
+                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-100">Slide 5</div>
+            </div>
+        </div>
+
+        <div data-swf id="my-carousel" class="p-4 bg-teal-200">
+            <div data-swf-items class="aspect-video">
                 <div data-swf-item class="flex items-center justify-center bg-blue-500">Slide 1</div>
                 <div data-swf-item class="flex items-center justify-center bg-red-500">Slide 2</div>
                 <div data-swf-item class="flex items-center justify-center bg-green-500">Slide 3</div>
@@ -29,21 +46,7 @@
             </div>
         </div>
 
-        <div data-swf>
-            <div data-swf-items data-swf-autoplay="true" data-swf-infinite="true" data-swf-autoplay-delay="5000"
-                data-swf-animation-speed="500" data-swf-start-index="0"
-                data-swf-responsive='[
-            {"breakpoint": 1024, "slidesPerView": 3, "spacing": 20},
-            {"breakpoint": 768, "slidesPerView": 2, "spacing": 15},
-            {"breakpoint": 480, "slidesPerView": 1, "spacing": 10}
-         ]'>
-                <div data-swf-item class="bg-gray-500 aspect-square">Slide 1</div>
-                <div data-swf-item class="bg-gray-500 aspect-square">Slide 2</div>
-                <div data-swf-item class="bg-gray-500 aspect-square">Slide 3</div>
-                <div data-swf-item class="bg-gray-500 aspect-square">Slide 4</div>
-                <div data-swf-item class="bg-gray-500 aspect-square">Slide 5</div>
-            </div>
-        </div>
+        
     </main>
 
     <script src="../dist/swf.js"></script>
@@ -57,17 +60,17 @@
                 responsive: [{
                         breakpoint: 1024, // Large screens
                         slidesPerView: 3, // Show 3 slides
-                        spacing: 20 // 20px gap between slides
+                        spacing: 16 // 20px gap between slides
                     },
                     {
                         breakpoint: 768, // Tablet
                         slidesPerView: 2,
-                        spacing: 15
+                        spacing: 12
                     },
                     {
                         breakpoint: 480, // Mobile
                         slidesPerView: 1,
-                        spacing: 10
+                        spacing: 8
                     }
                 ]
             });
