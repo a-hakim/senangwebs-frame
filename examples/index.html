@@ -16,7 +16,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h4 class="text-xl lg:text-2xl capitalize font-bold mb-4">SenangWebs Frame</h4>
 
-        <div data-swf class="mb-8">
+        <div data-swf class="mb-8 flex flex-col gap-2">
             <div data-swf-items data-swf-autoplay="true" data-swf-infinite="true" data-swf-autoplay-delay="5000"
                 data-swf-animation-speed="500" data-swf-start-index="0"
                 data-swf-responsive='[
@@ -24,29 +24,32 @@
             {"breakpoint": 768, "slidesPerView": 2, "spacing": 12},
             {"breakpoint": 480, "slidesPerView": 1, "spacing": 8}
          ]'>
-                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-20">Slide 1</div>
-                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-40">Slide 2</div>
-                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-60">Slide 3</div>
-                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-80">Slide 4</div>
-                <div data-swf-item class="bg-gray-500 aspect-square bg-opacity-100">Slide 5</div>
+                <div data-swf-item class="bg-gray-500 aspect-square p-4 rounded-lg bg-opacity-20">Slide 1</div>
+                <div data-swf-item class="bg-gray-500 aspect-square p-4 rounded-lg bg-opacity-40">Slide 2</div>
+                <div data-swf-item class="bg-gray-500 aspect-square p-4 rounded-lg bg-opacity-60">Slide 3</div>
+                <div data-swf-item class="bg-gray-500 aspect-square p-4 rounded-lg bg-opacity-80">Slide 4</div>
+                <div data-swf-item class="bg-gray-500 aspect-square p-4 rounded-lg bg-opacity-100">Slide 5</div>
             </div>
+            <div data-swf-indicators></div>
+            <div data-swf-controls></div>
         </div>
 
-        <div data-swf id="my-carousel" class="p-4 bg-teal-200">
+        <div data-swf id="my-carousel" class="p-4 bg-gray-200 rounded-xl">
             <div data-swf-items class="aspect-video">
-                <div data-swf-item class="flex items-center justify-center bg-blue-500">Slide 1</div>
-                <div data-swf-item class="flex items-center justify-center bg-red-500">Slide 2</div>
-                <div data-swf-item class="flex items-center justify-center bg-green-500">Slide 3</div>
-                <div data-swf-item class="flex items-center justify-center bg-yellow-500">Slide 4</div>
-                <div data-swf-item class="flex items-center justify-center bg-pink-500">Slide 5</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-blue-500">Slide 1</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-red-500">Slide 2</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-green-500">Slide 3</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-yellow-500">Slide 4</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-pink-500">Slide 5</div>
             </div>
-            <div data-swf-controls>
-                <button data-swf-prev>Previous</button>
+            <div class="flex justify-between items-center gap-4 mt-4">
+                <button data-swf-prev>Prev</button>
+                <div data-swf-indicators></div>
                 <button data-swf-next>Next</button>
             </div>
         </div>
 
-        
+
     </main>
 
     <script src="../dist/swf.js"></script>

@@ -55,6 +55,9 @@ class SWF {
             trackWidth: 0
         };
 
+        this.indicators = null;
+        this.indicatorButtons = [];
+        
         this.init();
     }
 
@@ -122,10 +125,22 @@ class SWF {
         this.slides = Array.from(this.track.querySelectorAll('[data-swf-item]'));
         if (!this.slides.length) return;
 
+        // First check for data-swf-controls
         const controls = this.wrapper.querySelector('[data-swf-controls]');
         if (controls) {
-            this.prevButton = controls.querySelector('[data-swf-prev]');
-            this.nextButton = controls.querySelector('[data-swf-next]');
+            // Create and append default arrow buttons to the controls
+            this.createDefaultControls(controls);
+        } else {
+            // Look for existing prev/next buttons
+            this.prevButton = this.wrapper.querySelector('[data-swf-prev]');
+            this.nextButton = this.wrapper.querySelector('[data-swf-next]');
+        }
+
+        // Setup indicators if they exist
+        const indicators = this.wrapper.querySelector('[data-swf-indicators]');
+        if (indicators) {
+            this.indicators = indicators;
+            this.setupIndicators();
         }
 
         this.container.style.setProperty('--swf-transition-speed', `${this.config.animationSpeed}ms`);
@@ -144,6 +159,58 @@ class SWF {
             this.handleResize();
         });
         this.resizeObserver.observe(this.container);
+    }
+
+    createDefaultControls(controls) {
+        // Create prev button
+        this.prevButton = document.createElement('button');
+        this.prevButton.setAttribute('data-swf-prev', '');
+        this.prevButton.setAttribute('aria-label', 'Previous slide');
+        this.prevButton.classList.add('swf-default-arrow');
+
+        // Create next button
+        this.nextButton = document.createElement('button');
+        this.nextButton.setAttribute('data-swf-next', '');
+        this.nextButton.setAttribute('aria-label', 'Next slide');
+        this.nextButton.classList.add('swf-default-arrow');
+
+        // Add buttons to existing controls
+        controls.appendChild(this.prevButton);
+        controls.appendChild(this.nextButton);
+    }
+
+    setupIndicators() {
+        // Clear existing indicators
+        this.indicators.innerHTML = '';
+        this.indicatorButtons = [];
+
+        // Create indicator buttons
+        this.slides.forEach((_, index) => {
+            const button = document.createElement('button');
+            button.setAttribute('data-swf-indicator', '');
+            button.setAttribute('aria-label', `Go to slide ${index + 1}`);
+            
+            if (index === this.state.currentIndex) {
+                button.classList.add('active');
+            }
+
+            button.addEventListener('click', () => this.goToSlide(index));
+            
+            this.indicators.appendChild(button);
+            this.indicatorButtons.push(button);
+        });
+    }
+
+    updateIndicators() {
+        if (!this.indicatorButtons) return;
+        
+        this.indicatorButtons.forEach((button, index) => {
+            if (index === this.state.currentIndex) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
     }
 
     setupResponsive() {
@@ -267,6 +334,7 @@ class SWF {
 
         setTimeout(() => {
             this.state.isAnimating = false;
+            this.updateIndicators(); // Update indicators after slide change
             this.container.dispatchEvent(new CustomEvent('swf:change', {
                 detail: {
                     index: targetIndex,
@@ -406,6 +474,11 @@ class SWF {
         }
         if (this.nextButton) {
             this.nextButton.removeEventListener('click', this.next);
+        }
+
+        if (this.indicators) {
+            this.indicators.innerHTML = '';
+            this.indicatorButtons = [];
         }
 
         this.container.removeEventListener('touchstart', this.handleTouchStart);
