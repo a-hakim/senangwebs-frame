@@ -1,7 +1,7 @@
 {
   "name": "senangwebs-frame",
   "version": "1.2.2",
-  "description": "Lightweight JavaScript library for carousel sections.",
+  "description": "Lightweight, touch-friendly JavaScript slider library that provides a modern, responsive carousel experience with smooth transitions and intuitive navigation.",
   "main": "index.js",
   "directories": {
     "example": "examples"
