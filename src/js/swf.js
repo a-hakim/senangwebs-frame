@@ -1,40 +1,38 @@
 /**
  * SenangWebs Frame - A lightweight, touch-friendly slider library
- * Version 1.1.0
+ * Version 1.2.1
  */
 
 class SWF {
     constructor(element, userConfig = {}) {
-        // Allow passing either element or config
         if (!(element instanceof HTMLElement)) {
             userConfig = element;
             element = null;
         }
 
-        this.container = element || document.querySelector('[data-swf-items]');
+        this.wrapper = element || document.querySelector('[data-swf]');
+        if (!this.wrapper) return;
+
+        this.container = this.wrapper.querySelector('[data-swf-items]');
         if (!this.container) return;
 
-        // Parse data attributes
         const dataConfig = this.parseDataAttributes(this.container);
-        
+
         this.config = {
             autoplay: false,
             autoplayDelay: 3000,
             animationSpeed: 300,
             infinite: true,
             startIndex: 0,
-            responsive: [
-                {
-                    breakpoint: 4000,
-                    slidesPerView: 1,
-                    spacing: 0
-                }
-            ],
-            ...dataConfig,  // Data attributes override defaults
-            ...userConfig   // User config overrides data attributes
+            responsive: [{
+                breakpoint: 4000,
+                slidesPerView: 1,
+                spacing: 0
+            }],
+            ...dataConfig,
+            ...userConfig
         };
 
-        // Ensure responsive config is properly formatted
         this.normalizeResponsiveConfig();
 
         this.state = {
@@ -46,7 +44,9 @@ class SWF {
             isTouching: false,
             currentBreakpoint: null,
             slidesPerView: 1,
-            spacing: 0
+            spacing: 0,
+            slideWidth: 0,
+            trackWidth: 0
         };
 
         this.init();
@@ -57,7 +57,6 @@ class SWF {
         const booleanAttrs = ['autoplay', 'infinite'];
         const numberAttrs = ['autoplayDelay', 'animationSpeed', 'startIndex'];
 
-        // Parse boolean attributes
         booleanAttrs.forEach(attr => {
             const value = element.dataset[`swf${attr.charAt(0).toUpperCase()}${attr.slice(1)}`];
             if (value !== undefined) {
@@ -65,7 +64,6 @@ class SWF {
             }
         });
 
-        // Parse number attributes
         numberAttrs.forEach(attr => {
             const value = element.dataset[`swf${attr.charAt(0).toUpperCase()}${attr.slice(1)}`];
             if (value !== undefined) {
@@ -73,114 +71,56 @@ class SWF {
             }
         });
 
-        // Parse responsive settings
-        this.parseResponsiveAttributes(element, config);
+        try {
+            const responsiveAttr = element.dataset.swfResponsive;
+            if (responsiveAttr) {
+                config.responsive = JSON.parse(responsiveAttr);
+            }
+        } catch (e) {
+            console.warn('Invalid responsive configuration:', e);
+        }
 
         return config;
     }
 
-    parseResponsiveAttributes(element, config) {
-        // Try to parse the responsive JSON data attribute
-        const responsiveJson = element.dataset.swfResponsive;
-        if (responsiveJson) {
-            try {
-                const parsed = JSON.parse(responsiveJson);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    config.responsive = parsed;
-                    console.log('Parsed responsive config:', config.responsive);
-                }
-            } catch (e) {
-                console.warn('Invalid JSON in data-swf-responsive:', e);
-            }
-        }
-
-        // Fallback to individual attributes if JSON parsing failed or was empty
-        if (!config.responsive || !config.responsive.length) {
-            const responsive = [];
-            let breakpoint = 0;
-            
-            while (true) {
-                const breakpointAttr = element.dataset[`swfBreakpoint${breakpoint}`];
-                const slidesAttr = element.dataset[`swfSlides${breakpoint}`];
-                const spacingAttr = element.dataset[`swfSpacing${breakpoint}`];
-
-                if (!breakpointAttr && !slidesAttr && !spacingAttr) {
-                    break;
-                }
-
-                if (breakpointAttr) {
-                    responsive.push({
-                        breakpoint: parseInt(breakpointAttr, 10) || 4000,
-                        slidesPerView: parseInt(slidesAttr, 10) || 1,
-                        spacing: parseInt(spacingAttr, 10) || 0
-                    });
-                }
-
-                breakpoint++;
-            }
-
-            if (responsive.length > 0) {
-                config.responsive = responsive;
-            }
-        }
-    }
-
     normalizeResponsiveConfig() {
         if (!Array.isArray(this.config.responsive)) {
-            this.config.responsive = [
-                {
-                    breakpoint: 4000,
-                    slidesPerView: 1,
-                    spacing: 0
-                }
-            ];
+            this.config.responsive = [{
+                breakpoint: 4000,
+                slidesPerView: 1,
+                spacing: 0
+            }];
             return;
         }
 
-        // Validate and fix each breakpoint configuration
-        this.config.responsive = this.config.responsive.map(bp => ({
-            breakpoint: parseInt(bp.breakpoint) || 4000,
-            slidesPerView: Math.max(1, parseInt(bp.slidesPerView) || 1),
-            spacing: Math.max(0, parseInt(bp.spacing) || 0)
-        }));
-
-        // Sort breakpoints in ascending order
-        this.config.responsive.sort((a, b) => a.breakpoint - b.breakpoint);
-
-        console.log('Normalized responsive config:', this.config.responsive);
+        this.config.responsive.sort((a, b) => b.breakpoint - a.breakpoint);
     }
 
     init() {
-        // Create track element if it doesn't exist
         this.track = this.container.querySelector('[data-swf-track]');
         if (!this.track) {
             this.track = document.createElement('div');
             this.track.setAttribute('data-swf-track', '');
-            while (this.container.firstChild) {
-                this.track.appendChild(this.container.firstChild);
-            }
+            
+            const items = Array.from(this.container.children);
+            items.forEach(item => {
+                if (item.hasAttribute('data-swf-item')) {
+                    this.track.appendChild(item);
+                }
+            });
+            
             this.container.appendChild(this.track);
         }
 
-        // Set infinite attribute if enabled
-        if (this.config.infinite) {
-            this.track.setAttribute('data-infinite', '');
-        }
+        this.slides = Array.from(this.track.querySelectorAll('[data-swf-item]'));
+        if (!this.slides.length) return;
 
-        this.slides = Array.from(this.container.querySelectorAll('[data-swf-item]'));
-        
-        // Find controls within the same container scope
-        const controls = this.container.closest('[data-swf-controls]') || 
-                        this.container.nextElementSibling;
-        
-        if (controls && controls.matches('[data-swf-controls]')) {
+        const controls = this.wrapper.querySelector('[data-swf-controls]');
+        if (controls) {
             this.prevButton = controls.querySelector('[data-swf-prev]');
             this.nextButton = controls.querySelector('[data-swf-next]');
         }
 
-        if (!this.slides.length) return;
-
-        // Set transition speed CSS variable
         this.container.style.setProperty('--swf-transition-speed', `${this.config.animationSpeed}ms`);
 
         this.setupResponsive();
@@ -191,113 +131,142 @@ class SWF {
             this.startAutoplay();
         }
 
-        // Initialize positions
-        this.updateSlidePositions();
+        this.updateSlidePositions(false);
 
-        // Add resize observer to handle container width changes
         this.resizeObserver = new ResizeObserver(() => {
-            this.setupStyles();
-            this.updateSlidePositions();
+            this.handleResize();
         });
         this.resizeObserver.observe(this.container);
     }
 
     setupResponsive() {
         const width = window.innerWidth;
-        console.log('Current window width:', width);
-        
-        // Find the appropriate breakpoint
-        let currentBreakpoint = this.config.responsive[0];
+        let matchedBreakpoint = this.config.responsive[0];
 
         for (const bp of this.config.responsive) {
             if (width <= bp.breakpoint) {
-                currentBreakpoint = bp;
-                break;
+                matchedBreakpoint = bp;
             }
         }
 
-        // If no matching breakpoint found, use the largest one
-        if (!currentBreakpoint) {
-            currentBreakpoint = this.config.responsive[this.config.responsive.length - 1];
+        const breakpointChanged = matchedBreakpoint !== this.state.currentBreakpoint;
+        if (breakpointChanged) {
+            this.state.currentBreakpoint = matchedBreakpoint;
+            this.state.slidesPerView = matchedBreakpoint.slidesPerView;
+            this.state.spacing = matchedBreakpoint.spacing;
         }
 
-        const previousBreakpoint = this.state.currentBreakpoint;
-        this.state.currentBreakpoint = currentBreakpoint;
-        this.state.slidesPerView = currentBreakpoint.slidesPerView;
-        this.state.spacing = currentBreakpoint.spacing;
-
-        console.log('Selected breakpoint:', currentBreakpoint);
-        console.log('Slides per view:', this.state.slidesPerView);
-        console.log('Spacing:', this.state.spacing);
-
-        return previousBreakpoint !== currentBreakpoint;
+        return breakpointChanged;
     }
 
     setupStyles() {
         if (!this.container || !this.track || !this.slides.length) return;
 
         const containerWidth = this.container.offsetWidth;
+        const { slidesPerView, spacing } = this.state;
+
+        // Calculate individual slide width
+        const availableWidth = containerWidth - (spacing * (slidesPerView - 1));
+        const slideWidth = availableWidth / slidesPerView;
+
+        // Calculate total track width needed for all slides
         const totalSlides = this.slides.length;
-        const slidesPerView = this.state.slidesPerView;
-        const spacing = this.state.spacing;
-
-        console.log('Container width:', containerWidth);
-        console.log('Setting up styles with:', { slidesPerView, spacing, totalSlides });
-
-        // Calculate slide width accounting for spacing between slides
-        const totalSpacingWidth = spacing * (slidesPerView - 1);
-        const slideWidth = (containerWidth - totalSpacingWidth) / slidesPerView;
-
-        console.log('Calculated slide width:', slideWidth);
-
-        // Reset track styles
+        const totalWidth = (slideWidth * totalSlides) + (spacing * (totalSlides - 1));
+        
+        // Update track styles
         this.track.style.display = 'flex';
-        this.track.style.flexWrap = 'nowrap';
-        this.track.style.width = '100%';
+        this.track.style.width = `${totalWidth}px`;
         this.track.style.gap = `${spacing}px`;
 
-        // Set styles for slides
+        // Update slides styles
         this.slides.forEach(slide => {
-            slide.style.flex = `0 0 ${(100 / slidesPerView)}%`;
-            slide.style.maxWidth = `${(100 / slidesPerView)}%`;
-            slide.style.boxSizing = 'border-box';
+            slide.style.flex = `0 0 ${slideWidth}px`;
+            slide.style.maxWidth = `${slideWidth}px`;
         });
 
-        // Store calculated dimensions for position updates
+        // Store calculated dimensions
         this.state.dimensions = {
+            containerWidth,
             slideWidth,
             spacing,
-            containerWidth,
-            slidesPerView
+            slidesPerView,
+            totalWidth,
+            slidesCount: totalSlides
         };
+    }
+
+    updateSlidePositions(animate = true) {
+        if (!this.state.dimensions) return;
+
+        const { slideWidth, spacing, slidesCount } = this.state.dimensions;
+        const slideAndSpacing = slideWidth + spacing;
+        const position = -this.state.currentIndex * slideAndSpacing;
+
+        // Prevent overscroll
+        const maxScroll = -(slideAndSpacing * (slidesCount - this.state.slidesPerView));
+        const clampedPosition = Math.max(Math.min(position, 0), maxScroll);
+
+        if (!animate) {
+            this.track.style.transition = 'none';
+        }
+
+        this.track.style.transform = `translateX(${clampedPosition}px)`;
+
+        if (!animate) {
+            // Force reflow
+            this.track.offsetHeight;
+            this.track.style.transition = '';
+        }
+
+        // Update navigation buttons
+        if (!this.config.infinite) {
+            if (this.prevButton) {
+                this.prevButton.disabled = this.state.currentIndex <= 0;
+            }
+            if (this.nextButton) {
+                this.nextButton.disabled = this.state.currentIndex >= this.getMaxIndex();
+            }
+        }
     }
 
     getMaxIndex() {
         if (!this.slides.length || !this.state.slidesPerView) return 0;
-        
-        const totalSlides = this.slides.length;
-        const slidesPerView = this.state.slidesPerView;
-        return Math.max(0, Math.ceil(totalSlides / slidesPerView) - 1);
+        return Math.max(0, this.slides.length - this.state.slidesPerView);
     }
 
-    updateSlidePositions() {
-        if (!this.state.dimensions) return;
+    goToSlide(index) {
+        if (this.state.isAnimating) return;
 
-        const { containerWidth } = this.state.dimensions;
-        const targetPosition = -this.state.currentIndex * containerWidth;
-        
-        this.track.style.transform = `translateX(${targetPosition}px)`;
+        const maxIndex = this.getMaxIndex();
+        let targetIndex = index;
 
-        // Update button states if not infinite
-        if (!this.config.infinite) {
-            const maxIndex = this.getMaxIndex();
-            if (this.prevButton) {
-                this.prevButton.disabled = this.state.currentIndex === 0;
+        if (this.config.infinite) {
+            if (index < 0) {
+                targetIndex = maxIndex;
+            } else if (index > maxIndex) {
+                targetIndex = 0;
             }
-            if (this.nextButton) {
-                this.nextButton.disabled = this.state.currentIndex === maxIndex;
+        } else {
+            if (index < 0) {
+                targetIndex = 0;
+            } else if (index > maxIndex) {
+                targetIndex = maxIndex;
             }
         }
+
+        this.state.isAnimating = true;
+        this.state.currentIndex = targetIndex;
+        this.updateSlidePositions();
+
+        setTimeout(() => {
+            this.state.isAnimating = false;
+            this.container.dispatchEvent(new CustomEvent('swf:change', {
+                detail: {
+                    index: targetIndex,
+                    slide: this.slides[targetIndex]
+                }
+            }));
+        }, this.config.animationSpeed);
     }
 
     bindEvents() {
@@ -332,25 +301,40 @@ class SWF {
 
         const currentX = e.touches[0].clientX;
         const diff = this.state.touchStartX - currentX;
-        const { containerWidth } = this.state.dimensions;
-        const baseTranslate = -(this.state.currentIndex * containerWidth);
+        const { slideWidth, spacing, slidesCount } = this.state.dimensions;
         
-        this.track.style.transform = `translateX(${baseTranslate - diff}px)`;
+        const slideAndSpacing = slideWidth + spacing;
+        const basePosition = -this.state.currentIndex * slideAndSpacing;
+        const newPosition = basePosition - diff;
+        
+        // Calculate bounds
+        const maxScroll = -(slideAndSpacing * (slidesCount - this.state.slidesPerView));
+        const clampedPosition = Math.max(Math.min(newPosition, 0), maxScroll);
+        
+        this.track.style.transform = `translateX(${clampedPosition}px)`;
     }
 
     handleTouchEnd(e) {
         if (!this.state.isTouching) return;
 
         const diff = this.state.touchStartX - e.changedTouches[0].clientX;
-        const threshold = this.container.offsetWidth * 0.15;
+        const { slideWidth, spacing } = this.state.dimensions;
+        const slideAndSpacing = slideWidth + spacing;
+        
+        // Calculate movement threshold (20% of slide width)
+        const threshold = slideAndSpacing * 0.2;
 
         if (Math.abs(diff) > threshold) {
+            // Calculate how many slides to move
+            const slidesToMove = Math.max(1, Math.round(Math.abs(diff) / slideAndSpacing));
+            
             if (diff > 0) {
-                this.next();
+                this.goToSlide(this.state.currentIndex + slidesToMove);
             } else {
-                this.prev();
+                this.goToSlide(this.state.currentIndex - slidesToMove);
             }
         } else {
+            // Snap back to current position
             this.updateSlidePositions();
         }
 
@@ -362,19 +346,16 @@ class SWF {
     }
 
     handleResize() {
-        const width = window.innerWidth;
-        console.log('Window resized to:', width);
-
         if (this.setupResponsive()) {
-            console.log('Breakpoint changed, updating styles');
             this.setupStyles();
             
+            // Ensure current index is valid after resize
             const maxIndex = this.getMaxIndex();
             if (this.state.currentIndex > maxIndex) {
                 this.state.currentIndex = maxIndex;
             }
             
-            this.updateSlidePositions();
+            this.updateSlidePositions(false);
         }
     }
 
@@ -384,39 +365,6 @@ class SWF {
         } else if (this.config.autoplay) {
             this.startAutoplay();
         }
-    }
-
-    goToSlide(index) {
-        if (this.state.isAnimating) return;
-
-        const maxIndex = this.getMaxIndex();
-        
-        let targetIndex = index;
-        if (this.config.infinite) {
-            if (index < 0) {
-                targetIndex = maxIndex;
-            } else if (index > maxIndex) {
-                targetIndex = 0;
-            }
-        } else {
-            if (index < 0 || index > maxIndex) {
-                return;
-            }
-        }
-
-        this.state.isAnimating = true;
-        this.state.currentIndex = targetIndex;
-        this.updateSlidePositions();
-
-        setTimeout(() => {
-            this.state.isAnimating = false;
-            this.container.dispatchEvent(new CustomEvent('swf:change', {
-                detail: {
-                    index: targetIndex,
-                    slide: this.slides[targetIndex * this.state.slidesPerView]
-                }
-            }));
-        }, this.config.animationSpeed);
     }
 
     next() {
@@ -441,7 +389,7 @@ class SWF {
 
     destroy() {
         this.pauseAutoplay();
-        
+
         if (this.resizeObserver) {
             this.resizeObserver.disconnect();
         }
@@ -461,6 +409,7 @@ class SWF {
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
 
         // Reset styles
+        this.wrapper.style = '';
         this.container.style = '';
         this.track.style = '';
         this.slides.forEach(slide => {
@@ -469,8 +418,8 @@ class SWF {
     }
 
     static initializeAll() {
-        document.querySelectorAll('[data-swf-items]').forEach(container => {
-            new SWF(container);
+        document.querySelectorAll('[data-swf]').forEach(wrapper => {
+            new SWF(wrapper);
         });
     }
 }
@@ -479,9 +428,8 @@ export default SWF;
 
 if (typeof window !== 'undefined') {
     window.SWF = SWF;
-    // Auto-initialize all carousels when the DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => SWF.initializeAll());
+        document.addEventListener('DOMContentLoaded', SWF.initializeAll);
     } else {
         SWF.initializeAll();
     }
