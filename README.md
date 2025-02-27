@@ -1,6 +1,3 @@
-[![SenangWebs](https://raw.githubusercontent.com/a-hakim/senangwebs-frame/refs/heads/main/src/sw_banner.webp)](https://use.senangwebs.com)
-Learn more at [SenangWebs.com](https://use.senangwebs.com)
-
 # SenangWebs Frame (SWF)
 
 SenangWebs Frame (SWF) is a lightweight, touch-friendly JavaScript slider library that provides a modern, responsive carousel experience with smooth transitions and intuitive navigation. With minimal setup, you can transform your content into an engaging slider with support for multiple items per view, autoplay, and responsive breakpoints.
