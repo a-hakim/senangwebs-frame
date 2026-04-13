@@ -10,7 +10,8 @@ SenangWebs Frame (SWF) is a lightweight, touch-friendly JavaScript slider librar
 - Configurable spacing between slides
 - Touch-friendly swipe navigation
 - Autoplay with customizable delay
-- Infinite loop option
+- Infinite loop option (rewind)
+- Seamless infinite loop option
 - Customizable via data attributes or JavaScript
 - Built-in navigation controls and indicators
 - Responsive breakpoints support
@@ -77,7 +78,8 @@ Configure your slider using either data attributes or JavaScript initialization:
 - `data-swf-controls`: Container for navigation arrows
 - `data-swf-indicators`: Container for slide indicators
 - `data-swf-autoplay="true|false"`: Enable/disable autoplay
-- `data-swf-infinite="true|false"`: Enable/disable infinite loop
+- `data-swf-infinite="true|false"`: Enable/disable infinite loop (rewinds to start)
+- `data-swf-infinity-loop="true|false"`: Enable/disable seamless infinite loop
 - `data-swf-autoplay-delay="3000"`: Set autoplay delay in milliseconds
 - `data-swf-animation-speed="300"`: Set transition speed in milliseconds
 - `data-swf-start-index="0"`: Set initial slide index
@@ -89,6 +91,7 @@ Configure your slider using either data attributes or JavaScript initialization:
 const slider = new SWF(element, {
     autoplay: false,
     infinite: true,
+    infinityLoop: false,
     autoplayDelay: 3000,
     animationSpeed: 300,
     startIndex: 0,

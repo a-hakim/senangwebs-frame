@@ -1,6 +1,6 @@
 {
   "name": "senangwebs-frame",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Lightweight, touch-friendly JavaScript slider library that provides a modern, responsive carousel experience with smooth transitions and intuitive navigation.",
   "main": "index.js",
   "directories": {
@@ -11,7 +11,12 @@
     "dev": "webpack --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["image", "carousel", "web", "customizable"],
+  "keywords": [
+    "image",
+    "carousel",
+    "web",
+    "customizable"
+  ],
   "author": "a-hakim",
   "license": "MIT",
   "devDependencies": {
@@ -19,8 +24,10 @@
     "@babel/preset-env": "^7.25.8",
     "babel-loader": "^9.2.1",
     "css-loader": "^7.1.2",
+    "css-minimizer-webpack-plugin": "^8.0.0",
     "mini-css-extract-plugin": "^2.9.1",
     "style-loader": "^4.0.0",
+    "terser-webpack-plugin": "^5.4.0",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4"
   }

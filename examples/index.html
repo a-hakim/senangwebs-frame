@@ -13,7 +13,7 @@
 <body class="min-h-screen bg-gray-100">
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
         <h4 class="text-xl lg:text-2xl capitalize font-bold mb-4">SenangWebs Frame</h4>
 
         <div data-swf class="mb-8 flex flex-col gap-2">
@@ -49,6 +49,20 @@
             </div>
         </div>
 
+        <div data-swf id="my-carousel-infinity" class="p-4 bg-gray-200 rounded-xl">
+            <div data-swf-items data-swf-infinity-loop="true" class="aspect-video">
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-blue-500">Slide 1</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-red-500">Slide 2</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-green-500">Slide 3</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-yellow-500">Slide 4</div>
+                <div data-swf-item class="flex items-center justify-center rounded-lg bg-pink-500">Slide 5</div>
+            </div>
+            <div class="flex justify-between items-center gap-4 mt-4">
+                <button data-swf-prev class="p-4 h-10 flex items-center justify-center bg-teal-600 text-white rounded-lg w-20">Prev</button>
+                <div data-swf-indicators></div>
+                <button data-swf-next class="p-4 h-10 flex items-center justify-center bg-teal-600 text-white rounded-lg w-20">Next</button>
+            </div>
+        </div>
 
     </main>
 

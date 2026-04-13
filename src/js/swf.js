@@ -29,6 +29,7 @@ class SWF {
             autoplayDelay: 3000,
             animationSpeed: 300,
             infinite: true,
+            infinityLoop: false,
             startIndex: 0,
             responsive: [{
                 breakpoint: 4000,
@@ -63,7 +64,7 @@ class SWF {
 
     parseDataAttributes(element) {
         const config = {};
-        const booleanAttrs = ['autoplay', 'infinite'];
+        const booleanAttrs = ['autoplay', 'infinite', 'infinityLoop'];
         const numberAttrs = ['autoplayDelay', 'animationSpeed', 'startIndex'];
 
         booleanAttrs.forEach(attr => {
@@ -125,6 +126,10 @@ class SWF {
         this.slides = Array.from(this.track.querySelectorAll('[data-swf-item]'));
         if (!this.slides.length) return;
 
+        if (this.config.infinityLoop) {
+            this.setupClones();
+        }
+
         // First check for data-swf-controls
         const controls = this.wrapper.querySelector('[data-swf-controls]');
         if (controls) {
@@ -159,6 +164,29 @@ class SWF {
             this.handleResize();
         });
         this.resizeObserver.observe(this.container);
+    }
+
+    setupClones() {
+        this.clonedSlidesPrepend = [];
+        this.clonedSlidesAppend = [];
+        
+        // Clone and prepend (to preserve visual order, insert backwards)
+        for (let i = this.slides.length - 1; i >= 0; i--) {
+            const clone = this.slides[i].cloneNode(true);
+            clone.setAttribute('data-swf-clone', 'true');
+            clone.setAttribute('aria-hidden', 'true');
+            this.track.insertBefore(clone, this.track.firstChild);
+            this.clonedSlidesPrepend.push(clone);
+        }
+
+        // Clone and append
+        this.slides.forEach(slide => {
+            const clone = slide.cloneNode(true);
+            clone.setAttribute('data-swf-clone', 'true');
+            clone.setAttribute('aria-hidden', 'true');
+            this.track.appendChild(clone);
+            this.clonedSlidesAppend.push(clone);
+        });
     }
 
     createDefaultControls(controls) {
@@ -201,11 +229,11 @@ class SWF {
         });
     }
 
-    updateIndicators() {
+    updateIndicators(activeIndex = this.state.currentIndex) {
         if (!this.indicatorButtons) return;
         
         this.indicatorButtons.forEach((button, index) => {
-            if (index === this.state.currentIndex) {
+            if (index === activeIndex) {
                 button.classList.add('active');
             } else {
                 button.classList.remove('active');
@@ -244,8 +272,12 @@ class SWF {
         const slideWidth = availableWidth / slidesPerView;
 
         // Calculate total track width needed for all slides
-        const totalSlides = this.slides.length;
-        const totalWidth = (slideWidth * totalSlides) + (spacing * (totalSlides - 1));
+        let totalItems = this.slides.length;
+        if (this.config.infinityLoop) {
+            totalItems = this.slides.length * 3;
+        }
+        
+        const totalWidth = (slideWidth * totalItems) + (spacing * (totalItems - 1));
         
         // Update track styles
         this.track.style.display = 'flex';
@@ -253,7 +285,8 @@ class SWF {
         this.track.style.gap = `${spacing}px`;
 
         // Update slides styles
-        this.slides.forEach(slide => {
+        const allSlides = Array.from(this.track.children);
+        allSlides.forEach(slide => {
             slide.style.flex = `0 0 ${slideWidth}px`;
             slide.style.maxWidth = `${slideWidth}px`;
         });
@@ -265,7 +298,7 @@ class SWF {
             spacing,
             slidesPerView,
             totalWidth,
-            slidesCount: totalSlides
+            slidesCount: this.slides.length
         };
     }
 
@@ -274,14 +307,23 @@ class SWF {
 
         const { slideWidth, spacing, slidesCount } = this.state.dimensions;
         const slideAndSpacing = slideWidth + spacing;
-        const position = -this.state.currentIndex * slideAndSpacing;
+        let position = -this.state.currentIndex * slideAndSpacing;
+
+        if (this.config.infinityLoop) {
+            position -= (slidesCount * slideAndSpacing);
+        }
 
         // Prevent overscroll
-        const maxScroll = -(slideAndSpacing * (slidesCount - this.state.slidesPerView));
-        const clampedPosition = Math.max(Math.min(position, 0), maxScroll);
+        let clampedPosition = position;
+        if (!this.config.infinityLoop) {
+            const maxScroll = -(slideAndSpacing * (slidesCount - this.state.slidesPerView));
+            clampedPosition = Math.max(Math.min(position, 0), maxScroll);
+        }
 
         if (!animate) {
             this.track.style.transition = 'none';
+        } else {
+            this.track.style.transition = `transform ${this.config.animationSpeed}ms ease`;
         }
 
         this.track.style.transform = `translateX(${clampedPosition}px)`;
@@ -293,7 +335,7 @@ class SWF {
         }
 
         // Update navigation buttons
-        if (!this.config.infinite) {
+        if (!this.config.infinite && !this.config.infinityLoop) {
             if (this.prevButton) {
                 this.prevButton.disabled = this.state.currentIndex <= 0;
             }
@@ -314,7 +356,9 @@ class SWF {
         const maxIndex = this.getMaxIndex();
         let targetIndex = index;
 
-        if (this.config.infinite) {
+        if (this.config.infinityLoop) {
+            targetIndex = index;
+        } else if (this.config.infinite) {
             if (index < 0) {
                 targetIndex = maxIndex;
             } else if (index > maxIndex) {
@@ -333,12 +377,35 @@ class SWF {
         this.updateSlidePositions();
 
         setTimeout(() => {
+            if (this.config.infinityLoop) {
+                if (this.state.currentIndex < 0) {
+                    this.state.currentIndex = this.slides.length + (this.state.currentIndex % this.slides.length);
+                    // Handle edge case where % perfectly divides
+                    if (this.state.currentIndex === this.slides.length) this.state.currentIndex = 0;
+                    this.updateSlidePositions(false);
+                } else if (this.state.currentIndex >= this.slides.length) {
+                    this.state.currentIndex = this.state.currentIndex % this.slides.length;
+                    this.updateSlidePositions(false);
+                }
+            }
+
             this.state.isAnimating = false;
-            this.updateIndicators(); // Update indicators after slide change
+            
+            let normalizedIndex = this.state.currentIndex;
+            if (this.config.infinityLoop) {
+                if (normalizedIndex < 0) {
+                    normalizedIndex = this.slides.length + (normalizedIndex % this.slides.length);
+                    if (normalizedIndex === this.slides.length) normalizedIndex = 0;
+                } else if (normalizedIndex >= this.slides.length) {
+                    normalizedIndex = normalizedIndex % this.slides.length;
+                }
+            }
+
+            this.updateIndicators(normalizedIndex); 
             this.container.dispatchEvent(new CustomEvent('swf:change', {
                 detail: {
-                    index: targetIndex,
-                    slide: this.slides[targetIndex]
+                    index: normalizedIndex,
+                    slide: this.slides[normalizedIndex]
                 }
             }));
         }, this.config.animationSpeed);
@@ -379,12 +446,23 @@ class SWF {
         const { slideWidth, spacing, slidesCount } = this.state.dimensions;
         
         const slideAndSpacing = slideWidth + spacing;
-        const basePosition = -this.state.currentIndex * slideAndSpacing;
+        let basePosition = -this.state.currentIndex * slideAndSpacing;
+        
+        if (this.config.infinityLoop) {
+            basePosition -= (slidesCount * slideAndSpacing);
+        }
+
         const newPosition = basePosition - diff;
         
         // Calculate bounds
-        const maxScroll = -(slideAndSpacing * (slidesCount - this.state.slidesPerView));
-        const clampedPosition = Math.max(Math.min(newPosition, 0), maxScroll);
+        let clampedPosition = newPosition;
+        if (!this.config.infinityLoop) {
+            const maxScroll = -(slideAndSpacing * (slidesCount - this.state.slidesPerView));
+            clampedPosition = Math.max(Math.min(newPosition, 0), maxScroll);
+        } else {
+            const maxScroll = -(slideAndSpacing * (slidesCount * 3 - this.state.slidesPerView));
+            clampedPosition = Math.max(Math.min(newPosition, 0), maxScroll);
+        }
         
         this.track.style.transform = `translateX(${clampedPosition}px)`;
     }
@@ -426,7 +504,9 @@ class SWF {
             
             // Ensure current index is valid after resize
             const maxIndex = this.getMaxIndex();
-            if (this.state.currentIndex > maxIndex) {
+            // In infinityLoop, we don't strictly constrain to maxIndex when calculating positioning smoothly,
+            // but we should ensure valid index.
+            if (!this.config.infinityLoop && this.state.currentIndex > maxIndex) {
                 this.state.currentIndex = maxIndex;
             }
             
@@ -488,10 +568,16 @@ class SWF {
         window.removeEventListener('resize', this.handleResize);
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
 
-        // Reset styles
+        // Reset styles and clones
         this.wrapper.style = '';
         this.container.style = '';
         this.track.style = '';
+        
+        if (this.config.infinityLoop && this.clonedSlidesPrepend && this.clonedSlidesAppend) {
+            this.clonedSlidesPrepend.forEach(clone => clone.remove());
+            this.clonedSlidesAppend.forEach(clone => clone.remove());
+        }
+
         this.slides.forEach(slide => {
             slide.style = '';
         });
