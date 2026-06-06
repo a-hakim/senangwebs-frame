@@ -1,15 +1,21 @@
 {
   "name": "senangwebs-frame",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Lightweight, touch-friendly JavaScript slider library that provides a modern, responsive carousel experience with smooth transitions and intuitive navigation.",
-  "main": "index.js",
+  "main": "dist/swf.js",
+  "style": "dist/swf.css",
+  "unpkg": "dist/swf.min.js",
+  "jsdelivr": "dist/swf.min.js",
+  "files": [
+    "dist"
+  ],
   "directories": {
     "example": "examples"
   },
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node scripts/verify-package.js"
   },
   "keywords": [
     "image",

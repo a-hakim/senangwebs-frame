@@ -27,6 +27,21 @@ SenangWebs Frame (SWF) is a lightweight, touch-friendly JavaScript slider librar
 npm install senangwebs-frame
 ```
 
+Import the JavaScript entry point and stylesheet through your bundler:
+
+```javascript
+import SWF from 'senangwebs-frame';
+import 'senangwebs-frame/dist/swf.css';
+
+const slider = new SWF(document.querySelector('[data-swf]'));
+```
+
+CommonJS consumers can load the constructor with:
+
+```javascript
+const SWF = require('senangwebs-frame');
+```
+
 ### Using a CDN
 
 You can include SenangWebs Frame directly in your HTML file using unpkg:
@@ -64,7 +79,7 @@ You can include SenangWebs Frame directly in your HTML file using unpkg:
 </div>
 ```
 
-The slider will automatically initialize when the page loads.
+The browser bundle automatically initializes every `[data-swf]` slider when the page loads.
 
 ## Configuration Options
 
@@ -88,6 +103,8 @@ Configure your slider using either data attributes or JavaScript initialization:
 ### JavaScript Initialization
 
 ```javascript
+const element = document.querySelector('[data-swf]');
+
 const slider = new SWF(element, {
     autoplay: false,
     infinite: true,
@@ -115,6 +132,17 @@ const slider = new SWF(element, {
 });
 ```
 
+Calling `new SWF(element, options)` replaces any existing SWF instance on that element.
+
+### JavaScript Methods
+
+- `next()`: Move to the next slide
+- `prev()`: Move to the previous slide
+- `goToSlide(index)`: Move to a specific zero-based slide index
+- `startAutoplay()`: Start autoplay
+- `pauseAutoplay()`: Pause autoplay
+- `destroy()`: Stop autoplay, disconnect the resize observer, and reset slider styles and clones
+
 ## Features in Detail
 
 ### Navigation
@@ -127,7 +155,7 @@ const slider = new SWF(element, {
   - Indicator dots for direct slide access
 - **Autoplay:**
   - Automatic slide progression
-  - Pauses on hover/touch
+  - Pauses during touch interaction and while the document is hidden
   - Customizable delay
 
 ### Responsive Design
@@ -161,6 +189,14 @@ SenangWebs Frame works on all modern browsers, including:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+Validate source and package entry points before submitting:
+
+```bash
+npm run build
+npm test
+npm pack --dry-run
+```
 
 ## License
 

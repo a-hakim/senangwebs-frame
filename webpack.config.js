@@ -5,7 +5,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const baseConfig = {
   entry: {
-    swf: ['./src/js/swf.js', './src/css/swf.css']
+    swf: ['./src/css/swf.css', './src/js/swf.js']
   },
   module: {
     rules: [
