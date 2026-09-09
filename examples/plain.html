@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SenangWebs Frame - Plain Example</title>
+    <!-- Framework-free example: only SWF styles are required. -->
+    <link rel="stylesheet" href="../dist/swf.css">
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #f3f4f6;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .slide {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.25rem;
+            /* Padded slides rely on SWF's built-in border-box sizing. */
+            padding: 16px;
+            border: 2px solid rgba(0, 0, 0, 0.15);
+        }
+
+        .slide:nth-child(5n+1) { background: #3b82f6; }
+        .slide:nth-child(5n+2) { background: #ef4444; }
+        .slide:nth-child(5n+3) { background: #22c55e; }
+        .slide:nth-child(5n+4) { background: #eab308; }
+        .slide:nth-child(5n+5) { background: #ec4899; }
+
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        button[data-swf-prev],
+        button[data-swf-next] {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            background: #0d9488;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>SenangWebs Frame - Plain Example</h1>
+
+        <!-- Autoplay: SWF generates a pause/play button because autoplay is enabled. -->
+        <section>
+            <h2>Autoplay with generated controls</h2>
+            <div data-swf>
+                <div data-swf-items data-swf-autoplay="true" data-swf-autoplay-delay="4000">
+                    <div data-swf-item class="slide">Slide 1</div>
+                    <div data-swf-item class="slide">Slide 2</div>
+                    <div data-swf-item class="slide">Slide 3</div>
+                    <div data-swf-item class="slide">Slide 4</div>
+                </div>
+                <div data-swf-indicators></div>
+                <div data-swf-controls></div>
+            </div>
+        </section>
+
+        <!-- Seamless loop -->
+        <section>
+            <h2>Seamless infinite loop</h2>
+            <div data-swf>
+                <div data-swf-items data-swf-infinity-loop="true">
+                    <div data-swf-item class="slide">Slide 1</div>
+                    <div data-swf-item class="slide">Slide 2</div>
+                    <div data-swf-item class="slide">Slide 3</div>
+                </div>
+                <div data-swf-indicators></div>
+            </div>
+        </section>
+
+        <!-- Carousels inside a form never submit it: all generated buttons are type="button". -->
+        <section>
+            <h2>Inside a form</h2>
+            <form action="#" onsubmit="event.preventDefault(); this.querySelector('.form-result').textContent = 'Form submitted';">
+                <div data-swf>
+                    <div data-swf-items data-swf-responsive='[
+                        {"breakpoint": 1024, "slidesPerView": 3, "spacing": 12},
+                        {"breakpoint": 600, "slidesPerView": 1, "spacing": 8}
+                    ]'>
+                        <div data-swf-item>
+                            <label for="demo-input-1">Input on slide 1</label>
+                            <input id="demo-input-1" type="text" value="hello">
+                        </div>
+                        <div data-swf-item class="slide">Slide 2</div>
+                        <div data-swf-item class="slide">Slide 3</div>
+                        <div data-swf-item class="slide">Slide 4</div>
+                        <div data-swf-item class="slide">Slide 5</div>
+                    </div>
+                    <div class="row">
+                        <button type="button" data-swf-prev>Prev</button>
+                        <div data-swf-indicators></div>
+                        <button type="button" data-swf-next>Next</button>
+                    </div>
+                    <p class="form-result" role="status"></p>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script src="../dist/swf.js"></script>
+</body>
+
+</html>

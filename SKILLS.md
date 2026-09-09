@@ -1,7 +1,7 @@
 ---
 name: senangwebs-frame
 description: Touch-friendly responsive carousel/slider with smooth transitions, multi-item view, autoplay, and breakpoints.
-version: 1.2.5
+version: 1.2.6
 package: senangwebs-frame
 ---
 
@@ -29,6 +29,7 @@ Start in `C:\wamp64\www\sw-libraries\senangwebs-frame`. Read `README.md`, `packa
 | `data-swf-controls` | flag | Container where default arrows are generated |
 | `data-swf-prev` | flag | Custom previous button |
 | `data-swf-next` | flag | Custom next button |
+| `data-swf-pause` | flag | Custom autoplay pause/play toggle button |
 | `data-swf-indicators` | flag | Container where indicator buttons are generated |
 | `data-swf-autoplay` | `true`/`false` | Enable autoplay |
 | `data-swf-autoplay-delay` | ms | Autoplay interval |
@@ -72,6 +73,10 @@ const slider = new SWF(element, options);
 - Verify breakpoint transitions without layout jumps
 - Ensure infinite loop does not create duplicate DOM indefinitely
 - Keep `package.json` entry fields aligned with generated files in `dist`
+- Listeners are registered with an AbortController signal; destroy() aborts them all — do not reintroduce unbound removals
+- Generated buttons must use `type="button"` so they never submit enclosing forms
+- Clone slides (seamless loop) must stay `aria-hidden`, `inert`, and stripped of `id`/`name` attributes
+- Keep the src header version comment in sync with `package.json` (checked by `scripts/verify-package.js`)
 
 ## Validation
 

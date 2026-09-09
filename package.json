@@ -1,6 +1,6 @@
 {
   "name": "senangwebs-frame",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Lightweight, touch-friendly JavaScript slider library that provides a modern, responsive carousel experience with smooth transitions and intuitive navigation.",
   "main": "dist/swf.js",
   "style": "dist/swf.css",
@@ -15,6 +15,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
+    "prepack": "npm run build && node scripts/verify-package.js",
     "test": "node scripts/verify-package.js"
   },
   "keywords": [
@@ -25,6 +26,14 @@
   ],
   "author": "a-hakim",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/a-hakim/senangwebs-frame.git"
+  },
+  "bugs": {
+    "url": "https://github.com/a-hakim/senangwebs-frame/issues"
+  },
+  "homepage": "https://github.com/a-hakim/senangwebs-frame#readme",
   "devDependencies": {
     "@babel/core": "^7.25.8",
     "@babel/preset-env": "^7.25.8",
